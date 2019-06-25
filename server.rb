@@ -20,7 +20,7 @@ GITHUB_API = 'https://api.github.com/'
 class MyRequest
   include HTTParty
   # TODO: This isn't authenticating correctly...
-  headers('Authorization' => '60fd0f91763f2f240be028bb2cc4058a6b379d44',
+  headers('Authorization' => ENV['GITHUB_API_TOKEN'],
           'User-Agent' => 'Hebrink First Test App')
 end
 
