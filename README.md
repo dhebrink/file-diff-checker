@@ -1,4 +1,11 @@
-You can use this GitHub App template code as a foundation to create any GitHub App you'd like. You can learn how to configure a template GitHub App by following the "[Setting up your development environment](https://developer.github.com/apps/quickstart-guides/setting-up-your-development-environment/)" quickstart guide on developer.github.com.
+# Overview
+Do you have a project that always requires a specific file to be updated with each PR?
+Perhaps a file containing the version info that must be incremented in order for new installations
+to install the updates?
+
+This project will listen for any opened PRs on a given repo and check the diff for a given file.
+If that file is not included in the PR's list of files changed, a review comment will be added
+as a reminder to the Author and any other peers.
 
 ## Install
 
@@ -11,5 +18,15 @@ To run the code, make sure you have [Bundler](http://gembundler.com/) installed;
 
 ## Run the server
 
-1. Run `ruby template_server.rb` on the command line.
-1. View the default Sinatra app at `localhost:3000`.
+1. Run `ruby server.rb` on the command line.
+1. View the Sinatra app at `localhost:3000`.
+
+## TODO
+
+* [ ] Read the target file from the target repo's config file (`.file-checker.json`)
+  * [ ] Authenticate with API from app
+  * [ ] Send API request to pull repo file content
+* [ ] Check for multiple files required per PR?
+* [ ] Host the app
+* [ ] Add tests
+* [ ] Configure CI builds
