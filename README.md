@@ -30,3 +30,6 @@ To run the code, make sure you have [Bundler](http://gembundler.com/) installed;
 * [ ] Host the app
 * [ ] Add tests
 * [ ] Configure CI builds
+
+
+*This was forked from the [`github-app-template`](https://github.com/github-developer/github-app-template) starter repo*
