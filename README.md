@@ -11,6 +11,15 @@ as a reminder to the Author and any other peers.
 
 To run the code, make sure you have [Bundler](http://gembundler.com/) installed; then enter `bundle install` on the command line.
 
+* Install this app on your GitHub account and give it access to a given repository.
+* Add a `.file-checker.json` file in the root directory of your repo's `master` branch
+
+```json
+{
+  "filename": "the_file_requiring_changes.py"
+}
+```
+
 ## Set environment variables
 
 1. Create a copy of the `.env-example` file called `.env`.
