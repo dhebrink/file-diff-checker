@@ -14,19 +14,22 @@ To run the code, make sure you have [Bundler](http://gembundler.com/) installed;
 ## Set environment variables
 
 1. Create a copy of the `.env-example` file called `.env`.
-2. Add your GitHub App's private key, app ID, and webhook secret to the `.env` file.
+1. Add the following to your `.env` file:
+    1. GitHub App private key
+    2. App ID
+    3. App webhook secret
+    4. GitHub API access key
 
-## Run the server
+## Local Testing
 
+1. Go to `smee.io/new` to get a new proxy redirect URL
+1. Run `smee --url <SMEE_URL> --port 3000 --path /event_handler`
 1. Run `ruby server.rb` on the command line.
-1. View the Sinatra app at `localhost:3000`.
 
 ## TODO
 
-* [ ] Read the target file from the target repo's config file (`.file-checker.json`)
-  * [ ] Authenticate with API from app
-  * [ ] Send API request to pull repo file content
 * [ ] Check for multiple files required per PR?
+* [ ] Investigate best practice for API authentication. `.env` key? Other programmatic options?
 * [ ] Host the app
 * [ ] Add tests
 * [ ] Configure CI builds

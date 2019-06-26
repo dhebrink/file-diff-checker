@@ -19,8 +19,7 @@ GITHUB_API = 'https://api.github.com/'
 
 class MyRequest
   include HTTParty
-  # TODO: This isn't authenticating correctly...
-  headers('Authorization' => ENV['GITHUB_API_TOKEN'],
+  headers('Authorization' => 'token ' + ENV['GITHUB_API_TOKEN'],
           'User-Agent' => 'Hebrink First Test App')
 end
 
@@ -102,15 +101,18 @@ class GHAapp < Sinatra::Application
       pr_number = the_payload['pull_request']['number']
       repo_name = the_payload['repository']['full_name']
 
-      # TODO: Get the config file from the repo's MASTER branch that tells us which file to check for.
-      file_of_interest = 'required_file_to_change.py'
-      #file_of_interest = read_from_repo_config(repo_name)
+      file_of_interest = read_from_repo_config(repo_name)
+      if !file_of_interest
+        # File not read from repo config, or error encountered in the API request.
+        logger.debug('File of interest could not be found from the repo\'s config.')
+        return
+      end
 
       # Grab the files changed in the PR and see if one of them is our target file.
       found = false
       diff_files = @installation_client.pull_request_files(repo_name, pr_number)
       for f in diff_files do
-        logger.debug('%s found as changed' % [f['filename']])
+        logger.debug('Changed file found: ' + f['filename'])
         if f['filename'] == file_of_interest
             found = true
             break
@@ -118,7 +120,7 @@ class GHAapp < Sinatra::Application
       end
 
       if !found
-        comment = 'Review your changes that have been submitted. The following file is required to be updated: `%s`' % [file_of_interest]
+        comment = 'Review your changes that have been submitted. The following file(s) are required to be updated: `%s`' % [file_of_interest]
         api_options = {'body' => comment, 'event' => 'COMMENT'}
         @installation_client.create_pull_request_review(repo_name, pr_number, api_options)
       end
@@ -129,17 +131,20 @@ class GHAapp < Sinatra::Application
       repo_details = @installation_client.repository(repo_name)
       short_name = repo_details['name']
       owner_user = repo_details['owner']['login']
-      content_path = 'repos/%{owner}/%{repo}/%{config_file}' % { :owner => owner_user, :repo => short_name, :config_file => CONFIG_FILE }
-      # TODO: This is failing with 404 due to lack of authorization... Not sure what to do here at this time.
-      response = MyRequest.get(GITHUB_API + content_path)
+      content_path = 'repos/%{owner}/%{repo}/contents/%{config_file}' % { :owner => owner_user, :repo => short_name, :config_file => CONFIG_FILE }
+      api_path = GITHUB_API + content_path
+      logger.debug('Hitting GitHub API: ' + api_path)
+      response = MyRequest.get(api_path)
       if response.code == 200
+        logger.debug('Content request success!')
         file_content = JSON.parse(response.body)
         file_json = Base64.decode64(file_content['content'])
         file_json = JSON.parse(file_json)
         target_file = file_json[CONFIG_KEY]
       else
-        logger.debug('Content Request Response: ' + response.code)
+        logger.debug('Content Request Response: %s' % [response.code])
         logger.debug(response.body)
+        logger.debug response
       end
       return target_file
     end
