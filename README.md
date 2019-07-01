@@ -28,6 +28,7 @@ To run the code, make sure you have [Bundler](http://gembundler.com/) installed;
     2. App ID
     3. App webhook secret
     4. GitHub API access key
+    5. GitHub User Agent (used for API request header, pairs with API key?)
 
 ## Local Testing
 

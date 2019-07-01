@@ -20,7 +20,8 @@ GITHUB_API = 'https://api.github.com/'
 class MyRequest
   include HTTParty
   headers('Authorization' => 'token ' + ENV['GITHUB_API_TOKEN'],
-          'User-Agent' => 'Hebrink First Test App')
+          'User-Agent' => ENV['GITHUB_USER_AGENT'],
+          'Accept' => 'application/json')
 end
 
 
