@@ -13,7 +13,6 @@ set :port, 3000
 set :bind, '0.0.0.0'
 
 CONFIG_FILE = '.file-checker.json'
-CONFIG_KEY = 'filename'
 GITHUB_API = 'https://api.github.com/'
 
 
@@ -102,33 +101,25 @@ class GHAapp < Sinatra::Application
       pr_number = the_payload['pull_request']['number']
       repo_name = the_payload['repository']['full_name']
 
-      file_of_interest = read_from_repo_config(repo_name)
-      if !file_of_interest
-        # File not read from repo config, or error encountered in the API request.
-        logger.debug('File of interest could not be found from the repo\'s config.')
+      diff_files = @installation_client.pull_request_files(repo_name, pr_number)
+      repo_json_config = read_from_repo_config(repo_name)
+      if repo_json_config == nil
+        logger.error('Repo Config Read Error!')
         return
       end
 
-      # Grab the files changed in the PR and see if one of them is our target file.
-      found = false
-      diff_files = @installation_client.pull_request_files(repo_name, pr_number)
-      for f in diff_files do
-        logger.debug('Changed file found: ' + f['filename'])
-        if f['filename'] == file_of_interest
-            found = true
-            break
-        end
-      end
+      review_comment = perform_file_checking_from_repo_json(repo_json_config, diff_files)
 
-      if !found
-        comment = 'Review your changes that have been submitted. The following file(s) are required to be updated: `%s`' % [file_of_interest]
-        api_options = {'body' => comment, 'event' => 'COMMENT'}
+      if review_comment
+        api_options = {'body' => review_comment, 'event' => 'COMMENT'}
         @installation_client.create_pull_request_review(repo_name, pr_number, api_options)
+      else
+        logger.debug('No files needed reporting. All clear!')
       end
     end
 
     def read_from_repo_config(repo_name)
-      target_file = nil
+      file_json = nil
       repo_details = @installation_client.repository(repo_name)
       short_name = repo_details['name']
       owner_user = repo_details['owner']['login']
@@ -141,13 +132,102 @@ class GHAapp < Sinatra::Application
         file_content = JSON.parse(response.body)
         file_json = Base64.decode64(file_content['content'])
         file_json = JSON.parse(file_json)
-        target_file = file_json[CONFIG_KEY]
       else
         logger.debug('Content Request Response: %s' % [response.code])
         logger.debug(response.body)
         logger.debug response
       end
-      return target_file
+      return file_json
+    end
+
+    def perform_file_checking_from_repo_json(repo_json, pr_diff_files)
+      review_comment = ''
+      spacer = '<br/>----<br/><br/>'
+      required_filenames = repo_json.fetch('required', [])
+      if !required_filenames.empty?
+        warning = warn_against_required_files(required_filenames, pr_diff_files)
+        if !warning.empty?
+          review_comment += spacer + warning
+        end
+      else
+        logger.debug('Required file config was empty')
+      end
+
+      caution_file_hash = repo_json.fetch('cautionary', {})
+      if !caution_file_hash.empty?
+        caution_msg = build_custom_caution_statements(caution_file_hash, pr_diff_files)
+        if !caution_msg.empty?
+          review_comment += spacer + caution_msg
+        end
+      else
+        logger.debug('Cautionary file config was empty')
+      end
+
+      dependent_file_hash = repo_json.fetch('dependent', {})
+      if !dependent_file_hash.empty?
+        dependency_msg = check_file_diff_dependencies(dependent_file_hash, pr_diff_files)
+        if !dependency_msg.empty?
+          review_comment += spacer + dependency_msg
+        end
+      else
+        logger.debug('Dependent file config was empty')
+      end
+
+      return review_comment
+    end
+
+    def warn_against_required_files(required_files, changed_files)
+      logger.debug('REQUIRED FILES FOUND')
+      logger.debug(required_files)
+      comment_msg = 'The following files are required to be altered in all Pull Requests but were not found in this diff:<br/>'
+      any_found = false
+      for file_ in changed_files do
+        this_filename = file_['filename']
+        if required_files.include? this_filename
+          comment_msg += '\t * ' + this_filename
+          any_found = true
+        end
+      end
+
+      if any_found
+        return comment_msg
+      else
+        return ''
+      end
+    end
+
+    def build_custom_caution_statements(cautionary_file_hash, changed_files)
+      logger.debug('CAUTION FILES FOUND')
+      logger.debug(cautionary_file_hash)
+      comment = ''
+      for file_ in changed_files do
+        this_filename = file_['filename']
+        file_message = cautionary_file_hash.fetch(this_filename, '')
+        if !file_message.empty?
+          comment += '* ' + file_message + '<br/>'
+        end
+      end
+
+      return comment
+    end
+
+    def check_file_diff_dependencies(dependent_file_hash, changed_files)
+      logger.debug('DEPENDENT FILES FOUND')
+      logger.debug(dependent_file_hash)
+      changed_filenames = []
+      # Collect just the filenames so that we can make simpler comparisons
+      # when looping through our dependency hash.
+      for file_ in changed_files do
+        changed_filenames.push(file_['filename'])
+      end
+
+      comment = ''
+      dependent_file_hash.each { | file_changed, file_to_search_for |
+        if changed_filenames.include? file_changed and !changed_filenames.include? file_to_search_for
+          comment += '* `%s` was modified and requires corresponding modification to `%s`<br/>' % [file_changed, file_to_search_for]
+        end
+      }
+      return comment
     end
 
     ############## BEGIN - template helper functions
