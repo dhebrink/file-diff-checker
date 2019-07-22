@@ -3,20 +3,31 @@ Do you have a project that always requires a specific file to be updated with ea
 Perhaps a file containing the version info that must be incremented in order for new installations
 to install the updates?
 
-This project will listen for any opened PRs on a given repo and check the diff for a given file.
-If that file is not included in the PR's list of files changed, a review comment will be added
-as a reminder to the Author and any other peers.
+This app will read PR events and leave comments based on a set of specified files.
+
+* `required` - any files listed in this section will be expected in all PR diffs
+* `cautionary` - customized warning messages if certain files are changed
+* `dependent` - note any files that typically result in corresponding changes to other files in the repo
 
 ## Install
 
 To run the code, make sure you have [Bundler](http://gembundler.com/) installed; then enter `bundle install` on the command line.
 
-* Install this app on your GitHub account and give it access to a given repository.
+* Install this app on your GitHub account and give it read-access to a given repository.
 * Add a `.file-checker.json` file in the root directory of your repo's `master` branch
 
 ```json
 {
-  "filename": "the_file_requiring_changes.py"
+	"required": [
+		"filename_1",
+		"filename_2"
+	],
+	"cautionary": {
+		"path/to/some/file": "You have modified a scary file. Here is a custom warning!"
+	},
+	"dependent": {
+		"some/changed/file": "another/file/expected/to/be/changed"
+	}
 }
 ```
 
@@ -38,7 +49,6 @@ To run the code, make sure you have [Bundler](http://gembundler.com/) installed;
 
 ## TODO
 
-* [ ] Check for multiple files required per PR?
 * [ ] Investigate best practice for API authentication. `.env` key? Other programmatic options?
 * [ ] Host the app
 * [ ] Add tests
