@@ -26,11 +26,9 @@ os: linux
 #   "files" section altogether. A blank or incomplete "files" section
 #   may cause associated deployments to fail.
 
-#files:
-#  - source: 
-#    destination:
-#  - source:
-#    destination:
+files:
+  - source: ./ 
+    destination: /webapp/
 
 # For deployments to Amazon Linux, Ubuntu Server, or RHEL instances,
 #   you can specify a "permissions" 
@@ -114,9 +112,9 @@ hooks:
 # During the ApplicationStart deployment lifecycle event, run the commands 
 #   in the script specified in "location".
   ApplicationStart:
-    - location: run_server.sh     
+    - location: ./run_server.sh     
       timeout:
-    - location: run_smee_proxy.sh
+    - location: ./run_smee_proxy.sh
       timeout: 
 # During the ValidateService deployment lifecycle event, run the commands 
 #   in the script specified in "location".
