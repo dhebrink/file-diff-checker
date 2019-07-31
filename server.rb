@@ -9,7 +9,7 @@ require 'logger'      # Logs debug statements
 require 'httparty'    # Sending additional API requests
 require 'base64'
 
-set :port, 80
+set :port, 3000
 set :bind, '0.0.0.0'
 
 CONFIG_FILE = '.file-checker.json'
