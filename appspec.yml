@@ -112,10 +112,8 @@ hooks:
 # During the ApplicationStart deployment lifecycle event, run the commands 
 #   in the script specified in "location".
   ApplicationStart:
-    - location: ./run_server.sh     
+    - location: ruby /webapp/server.rb
       timeout:
-    - location: ./run_smee_proxy.sh
-      timeout: 
 # During the ValidateService deployment lifecycle event, run the commands 
 #   in the script specified in "location".
 #  ValidateService:
