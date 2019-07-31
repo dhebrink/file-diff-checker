@@ -111,9 +111,9 @@ hooks:
 
 # During the ApplicationStart deployment lifecycle event, run the commands 
 #   in the script specified in "location".
-  ApplicationStart:
-    - location: ruby server.rb
-      timeout:
+#  ApplicationStart:
+#    - location: ./run_server.sh
+#      timeout:
 # During the ValidateService deployment lifecycle event, run the commands 
 #   in the script specified in "location".
 #  ValidateService:
